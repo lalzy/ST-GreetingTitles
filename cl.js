@@ -231,12 +231,11 @@
         try {
             const host = window.opener && !window.opener.closed ? window.opener : (window.parent !== window ? window.parent : null);
             const ctx = host?.SillyTavern?.getContext?.();
-            const stChar = ctx?.characters?.find(c => c.avatar === char.avatar);
-            if (stChar) {
-                stChar.data = stChar.data || {};
-                stChar.data.extensions = stChar.data.extensions || {};
-                stChar.data.extensions[Core.KEY] = JSON.parse(JSON.stringify(char.data.extensions[Core.KEY]));
-            }
+            const idx = ctx?.characters?.findIndex(c => c.avatar === char.avatar) ?? -1;
+            const value = JSON.parse(JSON.stringify(char.data.extensions[Core.KEY]));
+            // writeExtensionField also updates ST's cached json_data, which ST's own editor saves from.
+            // Without that, the next save in ST's character panel would write the old titles back.
+            if (idx !== -1 && typeof ctx.writeExtensionField === 'function') ctx.writeExtensionField(idx, Core.KEY, value);
             host?.GreetingTitles?.refresh?.();
         } catch { /* ST window not reachable; it will pick titles up on next load */ }
     }
